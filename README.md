@@ -2,7 +2,7 @@
 
 [![Sanity Test](https://github.com/redhat-cop/infra.rhacs_configuration/actions/workflows/pre-commit-sanity.yml/badge.svg)](https://github.com/redhat-cop/infra.rhacs_configuration/actions/workflows/pre-commit-sanity.yml)
 [![Integration Test](https://github.com/redhat-cop/infra.rhacs_configuration/actions/workflows/ansible-integration.yml/badge.svg)](https://github.com/redhat-cop/infra.rhacs_configuration/actions/workflows/ansible-integration.yml)
-
+[![OpenSSF Baseline](https://www.bestpractices.dev/projects/12113/baseline)](https://www.bestpractices.dev/projects/12113)
 
 The collection provides modules for configuring your Red Hat Advanced Cluster Security for Kubernetes (RHACS) and StackRox deployments.
 
