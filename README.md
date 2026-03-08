@@ -2,7 +2,7 @@
 
 [![Sanity Test](https://github.com/redhat-cop/infra.rhacs_configuration/actions/workflows/pre-commit-sanity.yml/badge.svg)](https://github.com/redhat-cop/infra.rhacs_configuration/actions/workflows/pre-commit-sanity.yml)
 [![Integration Test](https://github.com/redhat-cop/infra.rhacs_configuration/actions/workflows/ansible-integration.yml/badge.svg)](https://github.com/redhat-cop/infra.rhacs_configuration/actions/workflows/ansible-integration.yml)
-
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/12113/badge)](https://www.bestpractices.dev/projects/12113)
 
 The collection provides modules for configuring your Red Hat Advanced Cluster Security for Kubernetes (RHACS) and StackRox deployments.
 
@@ -186,7 +186,7 @@ For example, instead of repeating the `rhacs_host`, `rhacs_username`, and `rhacs
 ## Contributing to the Collection
 
 We welcome community contributions to this collection.
-If you find problems, then please open an [issue](https://github.com/redhat-cop/infra.rhacs_configuration/issues) or create a [pull request](https://github.com/redhat-cop/infra.rhacs_configuration/pulls).
+If you find problems, including vulnerabilities, then please open an [issue](https://github.com/redhat-cop/infra.rhacs_configuration/issues) or create a [pull request](https://github.com/redhat-cop/infra.rhacs_configuration/pulls).
 
 More information about contributing can be found in the [Contribution Guidelines](https://github.com/redhat-cop/infra.rhacs_configuration/blob/main/CONTRIBUTING.md).
 
