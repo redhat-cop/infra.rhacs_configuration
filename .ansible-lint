@@ -1,5 +1,4 @@
 ---
-profile: production
 exclude_paths:
   # Sample playbook for developers to test a specific module. This playbook is
   # not supposed to work as it is, but rather be used as an example.
