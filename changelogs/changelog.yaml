@@ -148,10 +148,21 @@ releases:
     changes:
       breaking_changes:
       - The name of the collection changes to ``infra.rhacs_configuration``.
-      release_summary: 'Renaming the ``herve4m.rhacs_configuration`` collection to ``infra.rhacs_configuration``,
-        and moving the developments to a new GitHub repository (https://github.com/redhat-cop/infra.rhacs_configuration).
+      release_summary: 'Renaming the ``herve4m.rhacs_configuration`` collection to
+        ``infra.rhacs_configuration``, and moving the developments to a new GitHub
+        repository (https://github.com/redhat-cop/infra.rhacs_configuration).
 
         '
     fragments:
     - PR1-v2.0.0-summary.yaml
     release_date: '2026-03-04'
+  2.0.1:
+    changes:
+      minor_changes:
+      - The ``include.nvd_cvss``, ``include.epss_probability``, and ``include.advisory``
+        parameters are deprecated because StackRox and RHACS 4.11 and later force
+        the parameters to ``true``.
+      release_summary: Deprecate some options in the ``rhacs_report_schedule`` module.
+    fragments:
+    - 15-v2.0.1-summary.yml
+    release_date: '2026-06-28'

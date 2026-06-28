@@ -4,6 +4,19 @@ Red Hat Advanced Cluster Security for Kubernetes Collection Release Notes
 
 .. contents:: Topics
 
+v2.0.1
+======
+
+Release Summary
+---------------
+
+Deprecate some options in the ``rhacs_report_schedule`` module.
+
+Minor Changes
+-------------
+
+- The ``include.nvd_cvss``, ``include.epss_probability``, and ``include.advisory`` parameters are deprecated because StackRox and RHACS 4.11 and later force the parameters to ``true``.
+
 v2.0.0
 ======
 
@@ -50,8 +63,8 @@ v1.3.0
 New Modules
 -----------
 
-- herve4m.rhacs_configuration.rhacs_image_watch - Manage image watches.
-- herve4m.rhacs_configuration.rhacs_policy - Manage security policies.
+- infra.rhacs_configuration.rhacs_image_watch - Manage image watches.
+- infra.rhacs_configuration.rhacs_policy - Manage security policies.
 
 v1.2.1
 ======
@@ -87,8 +100,8 @@ v1.1.0
 New Modules
 -----------
 
-- herve4m.rhacs_configuration.rhacs_compliance_schedule - Manage compliance schedule configurations.
-- herve4m.rhacs_configuration.rhacs_report_schedule - Manage vulnerability reporting schedules.
+- infra.rhacs_configuration.rhacs_compliance_schedule - Manage compliance schedule configurations.
+- infra.rhacs_configuration.rhacs_report_schedule - Manage vulnerability reporting schedules.
 
 v1.0.0
 ======
@@ -102,26 +115,26 @@ The changelog describes all changes made to the modules and plugins included in 
 New Modules
 -----------
 
-- herve4m.rhacs_configuration.rhacs_access_scope - Manage access scopes.
-- herve4m.rhacs_configuration.rhacs_api_token - Create API tokens for accessing the RHACS API.
-- herve4m.rhacs_configuration.rhacs_auth_provider - Manage authentication providers.
-- herve4m.rhacs_configuration.rhacs_cloud_management_platform - Manage RHACS integration with cloud platforms.
-- herve4m.rhacs_configuration.rhacs_collection - Manage deployment collections.
-- herve4m.rhacs_configuration.rhacs_config - Manage RHACS configuration.
-- herve4m.rhacs_configuration.rhacs_delegated_image_scan - Manage delegated image scanning configuration.
-- herve4m.rhacs_configuration.rhacs_exception - Configure vulnerability exception expiration periods.
-- herve4m.rhacs_configuration.rhacs_external_backup - Manage external backup configurations.
-- herve4m.rhacs_configuration.rhacs_group - Manage roles for authentication providers.
-- herve4m.rhacs_configuration.rhacs_image_integration - Manage image vulnerability scanner and registry integrations.
-- herve4m.rhacs_configuration.rhacs_init_bundle - Manage cluster init bundles.
-- herve4m.rhacs_configuration.rhacs_machine_access - Manage machine access configurations.
-- herve4m.rhacs_configuration.rhacs_notifier_integration - Manage notification methods.
-- herve4m.rhacs_configuration.rhacs_permission_set - Manage permission sets.
-- herve4m.rhacs_configuration.rhacs_policy_category - Manage policy categories.
-- herve4m.rhacs_configuration.rhacs_policy_clone - Clone security policies.
-- herve4m.rhacs_configuration.rhacs_policy_export - Export security policies.
-- herve4m.rhacs_configuration.rhacs_policy_import - Import security policies.
-- herve4m.rhacs_configuration.rhacs_policy_notifier - Associate notifiers to policies.
-- herve4m.rhacs_configuration.rhacs_policy_status - Enable or disable policies.
-- herve4m.rhacs_configuration.rhacs_role - Manage roles.
-- herve4m.rhacs_configuration.rhacs_signature - Manage RHACS integrations with Cosign signatures.
+- infra.rhacs_configuration.rhacs_access_scope - Manage access scopes.
+- infra.rhacs_configuration.rhacs_api_token - Create API tokens for accessing the RHACS API.
+- infra.rhacs_configuration.rhacs_auth_provider - Manage authentication providers.
+- infra.rhacs_configuration.rhacs_cloud_management_platform - Manage RHACS integration with cloud platforms.
+- infra.rhacs_configuration.rhacs_collection - Manage deployment collections.
+- infra.rhacs_configuration.rhacs_config - Manage RHACS configuration.
+- infra.rhacs_configuration.rhacs_delegated_image_scan - Manage delegated image scanning configuration.
+- infra.rhacs_configuration.rhacs_exception - Configure vulnerability exception expiration periods.
+- infra.rhacs_configuration.rhacs_external_backup - Manage external backup configurations.
+- infra.rhacs_configuration.rhacs_group - Manage roles for authentication providers.
+- infra.rhacs_configuration.rhacs_image_integration - Manage image vulnerability scanner and registry integrations.
+- infra.rhacs_configuration.rhacs_init_bundle - Manage cluster init bundles.
+- infra.rhacs_configuration.rhacs_machine_access - Manage machine access configurations.
+- infra.rhacs_configuration.rhacs_notifier_integration - Manage notification methods.
+- infra.rhacs_configuration.rhacs_permission_set - Manage permission sets.
+- infra.rhacs_configuration.rhacs_policy_category - Manage policy categories.
+- infra.rhacs_configuration.rhacs_policy_clone - Clone security policies.
+- infra.rhacs_configuration.rhacs_policy_export - Export security policies.
+- infra.rhacs_configuration.rhacs_policy_import - Import security policies.
+- infra.rhacs_configuration.rhacs_policy_notifier - Associate notifiers to policies.
+- infra.rhacs_configuration.rhacs_policy_status - Enable or disable policies.
+- infra.rhacs_configuration.rhacs_role - Manage roles.
+- infra.rhacs_configuration.rhacs_signature - Manage RHACS integrations with Cosign signatures.
