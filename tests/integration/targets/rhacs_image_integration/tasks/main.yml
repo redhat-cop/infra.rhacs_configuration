@@ -450,6 +450,7 @@
     skip_validate_certs: true
     rhacs_host: "{{ rhacs_host }}"
     rhacs_token: "{{ rhacs_token }}"
+    timeout: 60
   register: result
 
 - name: Ensure that the task did change something
@@ -473,6 +474,7 @@
     skip_validate_certs: true
     rhacs_host: "{{ rhacs_host }}"
     rhacs_token: "{{ rhacs_token }}"
+    timeout: 60
   register: result
 
 - name: Ensure that the task did not change anything

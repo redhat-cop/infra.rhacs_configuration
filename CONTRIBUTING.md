@@ -32,10 +32,12 @@ Prepare and submit pull requests as follows:
 2. Create a branch named appropriately for the change you are going to make.
 3. Make your code change.
 4. If you are creating a role or a module, then add an integration test in the `tests/integration/targets/` directory.
+   <!-- markdown-link-check-disable-next-line -->
    See [Understanding integration tests](https://docs.ansible.com/ansible/latest/community/collection_contributors/collection_integration_about.html)
    to learn how to create integrations tests.
    You can also use the existing tests as examples.
 5. Add a changelog fragment file in the `changelogs/fragments/` directory.
+   <!-- markdown-link-check-disable-next-line -->
    See the [Changelogs](https://docs.ansible.com/ansible/latest/community/development_process.html#changelogs) document for guidance.
 6. Push your code change to your forked repository.
 7. Use the GitHub web UI to navigate to the original repository https://github.com/redhat-cop/infra.rhacs_configuration/pulls (not your forked repository).
