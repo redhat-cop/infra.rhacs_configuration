@@ -126,7 +126,125 @@ options:
       - You can specify the collection by its name or by its identifier.
       - See the M(infra.rhacs_configuration.rhacs_collection) module to
         create and manage deployment collections.
+      - When you create a schedule, you must provide either the O(collection)
+        or the O(entities) parameter.
+      - Mutually exclusive with O(entities).
+      - Using collections for scoping reports is deprecated since StackRox
+        and RHACS 5.0, and will be removed in a future StackRox and RHACS
+        release. Use the O(entities) parameter instead.
+        StackRox and RHACS do not automatically convert the existing
+        collection-based schedules.
     type: str
+  entities:
+    description:
+      - Scope of the reports, defined by rules on the names, the labels, and
+        the annotations of clusters, namespaces, and deployments.
+      - The reports include the deployments that match all the rules that you
+        define. For a given rule, the deployments must match at least one of
+        the values that you list.
+        For example, if you define a rule for the cluster names and a rule
+        for the namespace labels, then the reports include the deployments
+        running in the clusters that match one of the cluster names, and in
+        the namespaces that have one of the labels.
+      - If you set O(entities) to an empty dictionary (V({})), then the
+        reports include all the deployments.
+      - The module replaces all the existing rules of the schedule with the
+        rules that you define in the O(entities) parameter.
+      - If you set the O(entities) parameter for a schedule that uses a
+        deployment collection, then the module converts the schedule to use
+        the O(entities) rules instead of the collection.
+      - When you create a schedule, you must provide either the O(collection)
+        or the O(entities) parameter.
+      - Mutually exclusive with O(collection).
+      - The O(entities) parameter requires StackRox and RHACS 4.11 or later.
+      - StackRox and RHACS do not support rules on the identifier of the
+        clusters, namespaces, or deployments.
+    type: dict
+    suboptions:
+      clusters:
+        description:
+          - Rules on the clusters.
+        type: dict
+        suboptions:
+          names:
+            description:
+              - Cluster names.
+            type: list
+            elements: dict
+            suboptions: &rule_values
+              value:
+                description:
+                  - Value to match.
+                  - For labels and annotations, the value must use the
+                    C(key=value) format, such as V(env=production).
+                    When the match type is V(REGEX), the key and the value
+                    parts are both regular expressions, such as
+                    V(env=prod.*).
+                type: str
+                required: true
+              match_type:
+                description:
+                  - V(EXACT) for an exact match of the value, or V(REGEX) to
+                    use the value as a regular expression.
+                  - The StackRox and RHACS web console uses regular
+                    expressions.
+                type: str
+                choices:
+                  - EXACT
+                  - REGEX
+                default: REGEX
+          labels:
+            description:
+              - Cluster labels.
+            type: list
+            elements: dict
+            suboptions: *rule_values
+      namespaces:
+        description:
+          - Rules on the namespaces.
+        type: dict
+        suboptions:
+          names:
+            description:
+              - Namespace names.
+            type: list
+            elements: dict
+            suboptions: *rule_values
+          labels:
+            description:
+              - Namespace labels.
+            type: list
+            elements: dict
+            suboptions: *rule_values
+          annotations:
+            description:
+              - Namespace annotations.
+            type: list
+            elements: dict
+            suboptions: *rule_values
+      deployments:
+        description:
+          - Rules on the deployments.
+        type: dict
+        suboptions:
+          names:
+            description:
+              - Deployment names.
+            type: list
+            elements: dict
+            suboptions: *rule_values
+          labels:
+            description:
+              - Deployment labels.
+            type: list
+            elements: dict
+            suboptions: *rule_values
+          annotations:
+            description:
+              - Deployment annotations.
+            type: list
+            elements: dict
+            suboptions: *rule_values
   interval:
     description:
       - Reporting frequency.
@@ -231,6 +349,13 @@ notes:
     module selects the schedule that matches most of the provided parameters.
   - Also, the module deletes all the schedules matching the O(name) parameter
     for delete operations.
+  - For the schedules that use the O(entities) parameter, StackRox and RHACS
+    store the O(severities) and O(fixability) filters in a search query.
+    The module also adds the C(Vulnerability State:OBSERVED) filter to that
+    query when it creates the schedule, so that the reports exclude the
+    deferred and false positive CVEs, as the web console does.
+    For updates, the module preserves the additional filters that you might
+    have added to the query by using the web console.
 attributes:
   check_mode:
     support: full
@@ -272,6 +397,39 @@ EXAMPLES = r"""
           - security@example.com
           - secteam@example.com
         subject: RHACS vulnerability report
+    state: present
+    rhacs_host: central.example.com
+    rhacs_username: admin
+    rhacs_password: vs9mrD55NP
+
+- name: Ensure the monthly vulnerability report of the production clusters exists
+  infra.rhacs_configuration.rhacs_report_schedule:
+    name: Monthly production report
+    description: Monthly report of the payment applications in production
+    fixability: FIXABLE
+    severities:
+      - IMPORTANT
+      - CRITICAL
+    entities:
+      clusters:
+        names:
+          - value: production
+            match_type: EXACT
+        labels:
+          - value: env=prod.*
+      namespaces:
+        names:
+          - value: payments-.*
+      deployments:
+        annotations:
+          - value: team=finance
+            match_type: EXACT
+          - value: team=accounting
+            match_type: EXACT
+    interval: MONTHLY
+    month_days:
+      - 1
+      - 15
     state: present
     rhacs_host: central.example.com
     rhacs_username: admin
@@ -334,7 +492,177 @@ def severity_to_API_type(severity):
     return "CRITICAL_VULNERABILITY_SEVERITY"
 
 
+# Severities in the order that the web console uses in the search queries
+API_SEVERITIES = [
+    "CRITICAL_VULNERABILITY_SEVERITY",
+    "IMPORTANT_VULNERABILITY_SEVERITY",
+    "MODERATE_VULNERABILITY_SEVERITY",
+    "LOW_VULNERABILITY_SEVERITY",
+    "UNKNOWN_VULNERABILITY_SEVERITY",
+]
+
+# Mapping between the `entities' parameter and the API entity scope rules
+ENTITY_TYPES = [
+    ("clusters", "SCOPE_ENTITY_CLUSTER"),
+    ("namespaces", "SCOPE_ENTITY_NAMESPACE"),
+    ("deployments", "SCOPE_ENTITY_DEPLOYMENT"),
+]
+ENTITY_FIELDS = [
+    ("names", "FIELD_NAME"),
+    ("labels", "FIELD_LABEL"),
+    ("annotations", "FIELD_ANNOTATION"),
+]
+
+# Search query filter that the web console adds by default to exclude the
+# deferred and false positive CVEs
+DEFAULT_QUERY_TERMS = ["Vulnerability State:OBSERVED"]
+
+
+def entities_to_rules(entities):
+    """Convert the `entities' parameter to a list of entity scope rules.
+
+    :param entities: The `entities' module parameter.
+    :type entities: dict
+
+    :return: The entity scope rules to send to the API.
+    :rtype: list
+    """
+    rules = []
+    for param_entity, api_entity in ENTITY_TYPES:
+        fields = entities.get(param_entity) or {}
+        for param_field, api_field in ENTITY_FIELDS:
+            values = fields.get(param_field)
+            if not values:
+                continue
+            rules.append(
+                {
+                    "entity": api_entity,
+                    "field": api_field,
+                    "values": [
+                        {"value": v["value"], "matchType": v.get("match_type") or "REGEX"}
+                        for v in values
+                    ],
+                }
+            )
+    return rules
+
+
+def canonical_rules(rules):
+    """Return a representation of entity scope rules that ignores ordering.
+
+    :param rules: Entity scope rules, as returned by the API.
+    :type rules: list
+
+    :return: The rules as a set of tuples.
+    :rtype: frozenset
+    """
+    result = set()
+    for rule in rules or []:
+        values = frozenset(
+            (v.get("value", ""), v.get("matchType") or "EXACT")
+            for v in rule.get("values") or []
+        )
+        if values:
+            result.add((rule.get("entity"), rule.get("field"), values))
+    return frozenset(result)
+
+
+def parse_query(query):
+    """Extract the fixability and the severities from a report search query.
+
+    :param query: The search query, such as
+                  ``Severity:CRITICAL_VULNERABILITY_SEVERITY+Fixable:true``
+    :type query: str
+
+    :return: A tuple with the fixability (``BOTH``, ``FIXABLE``, or
+             ``NOT_FIXABLE``), the set of severities, and the list of the
+             other search terms to preserve.
+    :rtype: tuple
+    """
+    fixability = "BOTH"
+    severities = set()
+    others = []
+    for term in (query or "").split("+"):
+        if not term.strip():
+            continue
+        key, sep, values = term.partition(":")
+        key_lower = key.strip().lower()
+        if sep and key_lower == "severity":
+            severities.update(v.strip() for v in values.split(",") if v.strip())
+        elif sep and key_lower == "fixable":
+            fix_values = set(v.strip().lower() for v in values.split(",") if v.strip())
+            if fix_values == set(["true"]):
+                fixability = "FIXABLE"
+            elif fix_values == set(["false"]):
+                fixability = "NOT_FIXABLE"
+        else:
+            others.append(term)
+    return (fixability, severities, others)
+
+
+def build_query(fixability, severities, others):
+    """Build a report search query.
+
+    :param fixability: ``BOTH``, ``FIXABLE``, or ``NOT_FIXABLE``.
+    :type fixability: str
+    :param severities: The severities to include, in the API format.
+    :type severities: set
+    :param others: Additional search terms to append to the query.
+    :type others: list
+
+    :return: The search query.
+    :rtype: str
+    """
+    terms = []
+    if severities:
+        sev_list = [s for s in API_SEVERITIES if s in severities]
+        sev_list += sorted(s for s in severities if s not in API_SEVERITIES)
+        terms.append("Severity:" + ",".join(sev_list))
+    if fixability == "FIXABLE":
+        terms.append("Fixable:true")
+    elif fixability == "NOT_FIXABLE":
+        terms.append("Fixable:false")
+    terms.extend(others)
+    return "+".join(terms)
+
+
+def get_scope_and_filters(config):
+    """Return the scope type and the effective CVE filters of a report.
+
+    For entity-scoped reports, StackRox and RHACS ignore the ``fixability``
+    and ``severities`` fields, and use the search query instead. For
+    collection-scoped reports, StackRox and RHACS ignore the search query.
+
+    :param config: The report configuration, as returned by the API.
+    :type config: dict
+
+    :return: A tuple with the scope type (``entity`` or ``collection``), the
+             fixability, the set of severities, and the list of additional
+             search terms (always empty for collection-scoped reports).
+    :rtype: tuple
+    """
+    vuln_report = config.get("vulnReportFilters") or {}
+    if "entityScope" in (config.get("resourceScope") or {}):
+        fixability, severities, others = parse_query(vuln_report.get("query"))
+        return ("entity", fixability, severities, others)
+    return (
+        "collection",
+        vuln_report.get("fixability") or "BOTH",
+        set(vuln_report.get("severities") or []),
+        [],
+    )
+
+
 def main():
+
+    rule_values = dict(
+        type="list",
+        elements="dict",
+        options=dict(
+            value=dict(required=True),
+            match_type=dict(choices=["EXACT", "REGEX"], default="REGEX"),
+        ),
+    )
 
     argument_spec = dict(
         name=dict(required=True),
@@ -358,6 +686,27 @@ def main():
         since=dict(choices=["ALL_TIME", "LAST_SENT", "DATE"]),
         date=dict(),
         collection=dict(),
+        entities=dict(
+            type="dict",
+            options=dict(
+                clusters=dict(
+                    type="dict",
+                    options=dict(names=rule_values, labels=rule_values),
+                ),
+                namespaces=dict(
+                    type="dict",
+                    options=dict(
+                        names=rule_values, labels=rule_values, annotations=rule_values
+                    ),
+                ),
+                deployments=dict(
+                    type="dict",
+                    options=dict(
+                        names=rule_values, labels=rule_values, annotations=rule_values
+                    ),
+                ),
+            ),
+        ),
         interval=dict(choices=["UNSET", "WEEKLY", "MONTHLY"]),
         hour=dict(type="int"),
         minute=dict(type="int"),
@@ -379,7 +728,7 @@ def main():
     # Create a module for ourselves
     module = APIModule(
         argument_spec=argument_spec,
-        mutually_exclusive=[("week_days", "month_days")],
+        mutually_exclusive=[("week_days", "month_days"), ("collection", "entities")],
         supports_check_mode=True,
     )
 
@@ -394,6 +743,7 @@ def main():
     since = module.params.get("since")
     date = module.params.get("date")
     collection = module.params.get("collection")
+    entities = module.params.get("entities")
     interval = module.params.get("interval")
     hour = module.params.get("hour")
     minute = module.params.get("minute")
@@ -587,6 +937,12 @@ def main():
     else:
         req_collection = None
 
+    if entities is not None:
+        req_rules = entities_to_rules(entities)
+        req_canonical_rules = canonical_rules(req_rules)
+    else:
+        req_rules = req_canonical_rules = None
+
     notifiers = []
     req_notifiers = set()
     if email_notifiers is not None:
@@ -625,9 +981,11 @@ def main():
 
     # Create the object
     if not configs and not new_configs:
-        # Verify that the collection parameter is provided
-        if not collection:
-            module.fail_json(msg="missing or empty required arguments: collection")
+        # Verify that the collection or the entities parameter is provided
+        if not collection and entities is None:
+            module.fail_json(
+                msg="one of the following parameters is required: collection, entities"
+            )
 
         # Build the data to send to the API to create the configuration
         name = new_name if new_name else name
@@ -661,14 +1019,25 @@ def main():
                 "severities": severity_list,
                 "imageTypes": list(req_image_types),
             },
-            "resourceScope": {
+            "notifiers": notifiers,
+        }
+
+        if entities is not None:
+            # For entity-scoped reports, StackRox and RHACS use the search
+            # query instead of the fixability and severities fields
+            new_fields["vulnReportFilters"]["fixability"] = "BOTH"
+            new_fields["vulnReportFilters"]["severities"] = []
+            new_fields["vulnReportFilters"]["query"] = build_query(
+                fixability, set(severity_list), DEFAULT_QUERY_TERMS
+            )
+            new_fields["resourceScope"] = {"entityScope": {"rules": req_rules}}
+        else:
+            new_fields["resourceScope"] = {
                 "collectionScope": {
                     "collectionId": req_collection.get("id", ""),
                     "collectionName": req_collection.get("name", ""),
                 }
-            },
-            "notifiers": notifiers,
-        }
+            }
 
         if include:
             if include.get("nvd_cvss") is not None:
@@ -730,8 +1099,9 @@ def main():
         schedule = config.get("schedule")
         schedule = schedule if schedule else {}
 
-        curr_severities = set(vuln_report.get("severities", []))
+        curr_scope, curr_fixability, curr_severities, dummy = get_scope_and_filters(config)
         curr_image_types = set(vuln_report.get("imageTypes", []))
+        resource_scope = config.get("resourceScope") or {}
 
         curr_notifiers = set()
         for n in config.get("notifiers", []):
@@ -754,7 +1124,7 @@ def main():
             changes += 1
         if description is not None and description != config.get("description"):
             changes += 1
-        if fixability and fixability != vuln_report.get("fixability"):
+        if fixability and fixability != curr_fixability:
             changes += 1
         if severities and req_severities != curr_severities:
             changes += 1
@@ -788,9 +1158,15 @@ def main():
             )
         ):
             changes += 1
-        if collection is not None and req_collection.get("id", "") != config.get(
-            "resourceScope", {}
-        ).get("collectionScope", {}).get("collectionId", ""):
+        if collection is not None and req_collection.get("id", "") != (
+            resource_scope.get("collectionScope") or {}
+        ).get("collectionId", ""):
+            changes += 1
+        if entities is not None and (
+            curr_scope != "entity"
+            or req_canonical_rules
+            != canonical_rules((resource_scope.get("entityScope") or {}).get("rules"))
+        ):
             changes += 1
         if interval == "UNSET" and schedule:
             changes += 1
@@ -825,10 +1201,6 @@ def main():
         new_fields["name"] = new_name
     if description is not None:
         new_fields["description"] = description
-    if fixability:
-        new_fields["vulnReportFilters"]["fixability"] = fixability
-    if severities:
-        new_fields["vulnReportFilters"]["severities"] = list(req_severities)
     if image_types:
         new_fields["vulnReportFilters"]["imageTypes"] = list(req_image_types)
     if include:
@@ -853,13 +1225,43 @@ def main():
         new_fields["vulnReportFilters"].pop("sinceLastSentScheduledReport", None)
         if "sinceStartDate" not in new_fields["vulnReportFilters"] or date is not None:
             new_fields["vulnReportFilters"]["sinceStartDate"] = start_date
-    if collection is not None:
+
+    # Scope of the report and CVE filters. For entity-scoped reports, StackRox
+    # and RHACS use the search query instead of the fixability and severities
+    # fields. When the scope type changes, the current filters are carried
+    # over to the new format.
+    curr_scope, curr_fixability, curr_severities, curr_others = get_scope_and_filters(obj)
+    req_fixability = fixability if fixability else curr_fixability
+    req_sev = req_severities if severities else curr_severities
+    if entities is not None:
+        new_fields["resourceScope"] = {"entityScope": {"rules": req_rules}}
+        req_scope = "entity"
+    elif collection is not None:
         new_fields["resourceScope"] = {
             "collectionScope": {
                 "collectionId": req_collection.get("id", ""),
                 "collectionName": req_collection.get("name", ""),
             }
         }
+        req_scope = "collection"
+    else:
+        req_scope = curr_scope
+
+    if req_scope == "entity":
+        # Preserve the additional search terms, such as the ones that users
+        # add from the web console
+        others = curr_others if curr_scope == "entity" else DEFAULT_QUERY_TERMS
+        new_fields["vulnReportFilters"]["fixability"] = "BOTH"
+        new_fields["vulnReportFilters"]["severities"] = []
+        new_fields["vulnReportFilters"]["query"] = build_query(
+            req_fixability, req_sev, others
+        )
+    else:
+        new_fields["vulnReportFilters"]["fixability"] = req_fixability
+        new_fields["vulnReportFilters"]["severities"] = list(req_sev)
+        if curr_scope == "entity":
+            new_fields["vulnReportFilters"]["query"] = ""
+
     if interval == "UNSET":
         new_fields["schedule"] = None
     if interval == "WEEKLY" or (not interval and week_days is not None):
