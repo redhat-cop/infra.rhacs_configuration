@@ -46,6 +46,12 @@ options:
         5.0 and later.
         Scanner V4 replaces StackRox Scanner and does not require an integration
         configuration.
+      - The V(google) type (Google Container Registry) is deprecated because
+        Google deprecated Google Container Registry (GCR).
+        Consequently, creating these integrations fails with RHACS 5.0 and
+        later.
+        You can still update and delete existing integrations.
+        Use the V(artifactregistry) type (Google Artifact Registry) instead.
     required: true
     type: str
     choices:
@@ -310,6 +316,9 @@ options:
     description:
       - Configuration for the integration with Google Container Registry.
       - Required when O(type=google).
+      - This section is deprecated for RHACS 5.0 and later, because RHACS 5.0
+        prevents the creation of Google Container Registry (GCR) integrations.
+        Use the O(artifactregistry) section instead.
     type: dict
     suboptions:
       endpoint:
