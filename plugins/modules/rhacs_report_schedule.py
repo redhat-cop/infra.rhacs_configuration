@@ -402,7 +402,7 @@ EXAMPLES = r"""
     rhacs_username: admin
     rhacs_password: vs9mrD55NP
 
-- name: Ensure the monthly vulnerability report of the production clusters exists
+- name: Ensure the monthly vulnerability report for production clusters exists
   infra.rhacs_configuration.rhacs_report_schedule:
     name: Monthly production report
     description: Monthly report of the payment applications in production
@@ -539,7 +539,10 @@ def entities_to_rules(entities):
                     "entity": api_entity,
                     "field": api_field,
                     "values": [
-                        {"value": v["value"], "matchType": v.get("match_type") or "REGEX"}
+                        {
+                            "value": v["value"],
+                            "matchType": v.get("match_type") or "REGEX",
+                        }
                         for v in values
                     ],
                 }
