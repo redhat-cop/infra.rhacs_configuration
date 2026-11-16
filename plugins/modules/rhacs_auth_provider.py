@@ -56,6 +56,12 @@ options:
       - URL of the RHACS web interface.
       - The network location of O(rhacs_host) by default, such as
         C(rhacs.example.com:8443) for example.
+      - The module converts the URL to the C(host:port) format that RHACS
+        expects.
+        The module removes the scheme and the path, and sets the port to 443
+        if you do not specify a port.
+        For example, the module converts V(https://rhacs.example.com/) to
+        C(rhacs.example.com:443).
     type: str
   auth0:
     description:
@@ -329,7 +335,50 @@ id:
 
 import copy
 
+from ansible.module_utils.six.moves.urllib.parse import urlsplit
+
 from ..module_utils.api_module import APIModule
+
+
+def normalize_ui_endpoint(endpoint):
+    """Convert a UI endpoint to the canonical ``host:port`` format.
+
+    StackRox 5.0 and later normalize the ``uiEndpoint`` parameter before
+    storing it: the scheme, the path, and the trailing slashes are removed, and
+    the port defaults to 443.
+    This function applies the same transformation so that the module can
+    compare the requested value with the value stored in RHACS (and that
+    older RHACS versions store the same value).
+
+    :param endpoint: The URL or network location to normalize.
+    :type endpoint: str
+
+    :return: The normalized ``host:port`` endpoint, or the given value
+             unchanged when it is empty or cannot be parsed.
+    :rtype: str
+    """
+    if not endpoint:
+        return endpoint
+    ep = endpoint.strip()
+    if not ep.startswith("http"):
+        ep = "https://" + ep
+    try:
+        netloc = urlsplit(ep.rstrip("/")).netloc
+    except ValueError:
+        return endpoint
+    # Remove the user info part, if any
+    host_port = netloc.rpartition("@")[2]
+    if not host_port:
+        return endpoint
+    # IPv6 address without a port, such as [2001:db8::1]
+    if host_port.endswith("]"):
+        return host_port + ":443"
+    host, sep, port = host_port.rpartition(":")
+    if not sep:
+        return host_port + ":443"
+    if not port:
+        return host + ":443"
+    return host_port
 
 
 def parameter_to_API_type(auth_type):
@@ -431,7 +480,7 @@ def main():
     name = module.params.get("name")
     new_name = module.params.get("new_name")
     auth_type = module.params.get("type")
-    rhacs_url = module.params.get("rhacs_url")
+    rhacs_url = normalize_ui_endpoint(module.params.get("rhacs_url"))
     auth0 = module.params.get("auth0")
     google = module.params.get("google")
     oidc = module.params.get("oidc")
@@ -513,7 +562,10 @@ def main():
     if state == "absent":
         id = config.get("id", "") if config else ""
         module.delete(
-            config, "authentication provider", name, "/v1/authProviders/{id}".format(id=id)
+            config,
+            "authentication provider",
+            name,
+            "/v1/authProviders/{id}".format(id=id),
         )
 
     if not config and new_config:
@@ -550,7 +602,9 @@ def main():
         new_fields = {
             "name": name,
             "type": parameter_to_API_type(auth_type),
-            "uiEndpoint": rhacs_url if rhacs_url else module.host_url.netloc,
+            "uiEndpoint": (
+                rhacs_url if rhacs_url else normalize_ui_endpoint(module.host_url.netloc)
+            ),
             "enabled": True,
             "traits": {"mutabilityMode": "ALLOW_MUTATE"},
         }
@@ -696,7 +750,11 @@ def main():
             new_fields["config"] = {"keys": ca_certificate}
 
         resp = module.create(
-            "authentication provider", name, "/v1/authProviders", new_fields, auto_exit=False
+            "authentication provider",
+            name,
+            "/v1/authProviders",
+            new_fields,
+            auto_exit=False,
         )
         module.exit_json(changed=True, id=resp.get("id", ""))
 
@@ -745,8 +803,13 @@ def main():
 
     # Compare the object with the requested configuration to verify whether
     # an update is required
+    # RHACS 5.0+ normalizes the UI endpoint (host:port), whereas older versions
+    # store the value as is. Normalize both values before comparing them.
+    ui_endpoint_unchanged = not rhacs_url or rhacs_url == normalize_ui_endpoint(
+        data.get("uiEndpoint")
+    )
     if auth_conf["conf"] is None:
-        if not new_name and (not rhacs_url or rhacs_url == data.get("uiEndpoint")):
+        if not new_name and ui_endpoint_unchanged:
             module.exit_json(changed=False, id=id_to_update)
 
     elif auth_type == "auth0":
@@ -755,7 +818,7 @@ def main():
 
         if (
             not new_name
-            and (not rhacs_url or rhacs_url == data.get("uiEndpoint"))
+            and ui_endpoint_unchanged
             and (tenant_url is None or tenant_url == conf.get("issuer"))
             and (client_id is None or client_id == conf.get("client_id"))
         ):
@@ -771,7 +834,7 @@ def main():
 
         if (
             not new_name
-            and (not rhacs_url or rhacs_url == data.get("uiEndpoint"))
+            and ui_endpoint_unchanged
             and (audience is None or audience == conf.get("audience"))
         ):
             module.exit_json(changed=False, id=id_to_update)
@@ -808,7 +871,7 @@ def main():
 
         if (
             not new_name
-            and (not rhacs_url or rhacs_url == data.get("uiEndpoint"))
+            and ui_endpoint_unchanged
             and not client_secret
             and (
                 use_client_secret is None
@@ -868,7 +931,7 @@ def main():
                 data["claimMappings"][claim["key"]] = claim["value"]
 
     elif auth_type == "openshift":
-        if not new_name and (not rhacs_url or rhacs_url == data.get("uiEndpoint")):
+        if not new_name and ui_endpoint_unchanged:
             module.exit_json(changed=False, id=id_to_update)
 
     elif auth_type == "saml":
@@ -882,7 +945,7 @@ def main():
 
         if (
             not new_name
-            and (not rhacs_url or rhacs_url == data.get("uiEndpoint"))
+            and ui_endpoint_unchanged
             and (
                 service_provider_issuer is None
                 or service_provider_issuer == conf.get("sp_issuer")
@@ -928,7 +991,7 @@ def main():
 
         if (
             not new_name
-            and (not rhacs_url or rhacs_url == data.get("uiEndpoint"))
+            and ui_endpoint_unchanged
             and (ca_certificate is None or ca_certificate == conf.get("keys"))
         ):
             module.exit_json(changed=False, id=id_to_update)
