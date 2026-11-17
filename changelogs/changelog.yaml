@@ -166,3 +166,33 @@ releases:
     fragments:
     - 15-v2.0.1-summary.yml
     release_date: '2026-06-28'
+  2.1.0:
+    changes:
+      bugfixes:
+      - rhacs_auth_provider - RHACS 5.0 normalizes the ``uiEndpoint`` value (``host:port``
+        format, no scheme or path, port 443 by default). The module was comparing
+        the ``rhacs_url`` parameter with the stored value without normalizing it,
+        and so deleted and re-created the authentication provider at each run. The
+        module now normalizes the ``rhacs_url`` parameter the same way before comparing
+        and sending it.
+      deprecated_features:
+      - rhacs_image_integration - the ``google`` integration type (Google Container
+        Registry), and the ``google`` section, are deprecated. Google deprecated Google
+        Container Registry (GCR), and RHACS 5.0 rejects the creation of new GCR integrations.
+        Use the ``artifactregistry`` integration type (Google Artifact Registry) instead.
+      - rhacs_image_integration - the ``stackrox`` and ``clairify`` integration types,
+        and the ``clairify`` (``stackrox``) section, are deprecated. RHACS 5.0 removed
+        StackRox Scanner (Scanner V2) and rejects these integrations. Scanner V4 replaces
+        StackRox Scanner and does not require an integration configuration.
+      minor_changes:
+      - rhacs_report_schedule - add the ``entities`` parameter to scope the reports
+        with rules on the names, labels, and annotations of clusters, namespaces,
+        and deployments, instead of using a deployment collection. The ``entities``
+        parameter requires RHACS 4.11 or later (https://github.com/redhat-cop/infra.rhacs_configuration/issues/26).
+      - rhacs_report_schedule - the ``collection`` parameter is no longer required
+        when creating a schedule if you provide the ``entities`` parameter instead.
+        Using collections for scoping reports is deprecated since RHACS 5.0.
+      release_summary: Add compatibility with RHACS 5
+    fragments:
+    - 27-v2.1.0-summary.yml
+    release_date: '2026-11-17'

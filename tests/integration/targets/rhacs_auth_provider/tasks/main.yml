@@ -184,7 +184,7 @@
   infra.rhacs_configuration.rhacs_auth_provider:
     name: ansible auth 1
     type: auth0
-    rhacs_url: "{{ rhacs_host }}"
+    rhacs_url: central.example.com:12345
     state: present
     skip_validate_certs: true
     rhacs_host: "{{ rhacs_host }}"

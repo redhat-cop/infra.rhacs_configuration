@@ -797,6 +797,307 @@
     that: not result['changed']
     fail_msg: The preceding task should not have changed anything
 
+# Entity scope
+- name: ERROR EXPECTED Ensure the report is scheduled (collection and entities)
+  infra.rhacs_configuration.rhacs_report_schedule:
+    name: Entity report 1
+    collection: "{{ collection['id'] }}"
+    entities:
+      clusters:
+        names:
+          - value: production
+    skip_validate_certs: true
+    rhacs_host: "{{ rhacs_host }}"
+    rhacs_token: "{{ rhacs_token }}"
+  ignore_errors: true
+  register: result
+
+- name: Ensure that the task failed (collection and entities)
+  ansible.builtin.assert:
+    that: result['failed']
+    fail_msg: The preceding task should have failed (collection and entities)
+
+- name: ERROR EXPECTED Ensure the report is scheduled (cluster annotations)
+  infra.rhacs_configuration.rhacs_report_schedule:
+    name: Entity report 1
+    entities:
+      clusters:
+        annotations:
+          - value: team=finance
+    skip_validate_certs: true
+    rhacs_host: "{{ rhacs_host }}"
+    rhacs_token: "{{ rhacs_token }}"
+  ignore_errors: true
+  register: result
+
+- name: Ensure that the task failed (cluster annotations)
+  ansible.builtin.assert:
+    that: result['failed']
+    fail_msg: The preceding task should have failed (cluster annotations)
+
+- name: ERROR EXPECTED Ensure the report is scheduled (wrong label format)
+  infra.rhacs_configuration.rhacs_report_schedule:
+    name: Entity report 1
+    entities:
+      namespaces:
+        labels:
+          - value: no-equal-sign
+    skip_validate_certs: true
+    rhacs_host: "{{ rhacs_host }}"
+    rhacs_token: "{{ rhacs_token }}"
+  ignore_errors: true
+  register: result
+
+- name: Ensure that the task failed (wrong label format)
+  ansible.builtin.assert:
+    that: result['failed']
+    fail_msg: The preceding task should have failed (wrong label format)
+
+- name: Ensure the entity report is scheduled 1
+  infra.rhacs_configuration.rhacs_report_schedule:
+    name: Entity report 1
+    description: Entity-scoped report
+    fixability: FIXABLE
+    severities:
+      - IMPORTANT
+      - CRITICAL
+    entities:
+      clusters:
+        names:
+          - value: production
+            match_type: EXACT
+          - value: prod-.*
+      namespaces:
+        labels:
+          - value: env=prod.*
+      deployments:
+        annotations:
+          - value: team=finance
+            match_type: EXACT
+    skip_validate_certs: true
+    rhacs_host: "{{ rhacs_host }}"
+    rhacs_token: "{{ rhacs_token }}"
+  register: result
+
+- name: Ensure that the task did change something
+  ansible.builtin.assert:
+    that: result['changed']
+    fail_msg: The preceding task should have changed something
+
+- name: Ensure the entity report is scheduled 1 (no change) 1
+  infra.rhacs_configuration.rhacs_report_schedule:
+    name: Entity report 1
+    description: Entity-scoped report
+    fixability: FIXABLE
+    severities:
+      - CRITICAL
+      - IMPORTANT
+    entities:
+      deployments:
+        annotations:
+          - value: team=finance
+            match_type: EXACT
+      namespaces:
+        labels:
+          - value: env=prod.*
+            match_type: REGEX
+      clusters:
+        names:
+          - value: prod-.*
+            match_type: REGEX
+          - value: production
+            match_type: EXACT
+    skip_validate_certs: true
+    rhacs_host: "{{ rhacs_host }}"
+    rhacs_token: "{{ rhacs_token }}"
+  register: result
+
+- name: Ensure that the task did not change anything
+  ansible.builtin.assert:
+    that: not result['changed']
+    fail_msg: The preceding task should not have changed anything
+
+- name: Ensure the entity report is scheduled 1 (no change) 2
+  infra.rhacs_configuration.rhacs_report_schedule:
+    name: Entity report 1
+    skip_validate_certs: true
+    rhacs_host: "{{ rhacs_host }}"
+    rhacs_token: "{{ rhacs_token }}"
+  register: result
+
+- name: Ensure that the task did not change anything
+  ansible.builtin.assert:
+    that: not result['changed']
+    fail_msg: The preceding task should not have changed anything
+
+- name: Ensure the entity report 1 is updated (severities)
+  infra.rhacs_configuration.rhacs_report_schedule:
+    name: Entity report 1
+    severities:
+      - LOW
+    skip_validate_certs: true
+    rhacs_host: "{{ rhacs_host }}"
+    rhacs_token: "{{ rhacs_token }}"
+  register: result
+
+- name: Ensure that the task did change something
+  ansible.builtin.assert:
+    that: result['changed']
+    fail_msg: The preceding task should have changed something
+
+- name: Ensure the entity report 1 is updated (no change)
+  infra.rhacs_configuration.rhacs_report_schedule:
+    name: Entity report 1
+    fixability: FIXABLE
+    severities:
+      - LOW
+    skip_validate_certs: true
+    rhacs_host: "{{ rhacs_host }}"
+    rhacs_token: "{{ rhacs_token }}"
+  register: result
+
+- name: Ensure that the task did not change anything
+  ansible.builtin.assert:
+    that: not result['changed']
+    fail_msg: The preceding task should not have changed anything
+
+- name: Ensure the entity report 1 is updated (entities)
+  infra.rhacs_configuration.rhacs_report_schedule:
+    name: Entity report 1
+    entities:
+      clusters:
+        names:
+          - value: production
+            match_type: EXACT
+    skip_validate_certs: true
+    rhacs_host: "{{ rhacs_host }}"
+    rhacs_token: "{{ rhacs_token }}"
+  register: result
+
+- name: Ensure that the task did change something
+  ansible.builtin.assert:
+    that: result['changed']
+    fail_msg: The preceding task should have changed something
+
+- name: Ensure the entity report 1 is converted to a collection
+  infra.rhacs_configuration.rhacs_report_schedule:
+    name: Entity report 1
+    collection: "{{ collection['id'] }}"
+    skip_validate_certs: true
+    rhacs_host: "{{ rhacs_host }}"
+    rhacs_token: "{{ rhacs_token }}"
+  register: result
+
+- name: Ensure that the task did change something
+  ansible.builtin.assert:
+    that: result['changed']
+    fail_msg: The preceding task should have changed something
+
+- name: Ensure the entity report 1 uses a collection (no change)
+  infra.rhacs_configuration.rhacs_report_schedule:
+    name: Entity report 1
+    fixability: FIXABLE
+    severities:
+      - LOW
+    collection: "{{ collection['id'] }}"
+    skip_validate_certs: true
+    rhacs_host: "{{ rhacs_host }}"
+    rhacs_token: "{{ rhacs_token }}"
+  register: result
+
+- name: Ensure that the task did not change anything
+  ansible.builtin.assert:
+    that: not result['changed']
+    fail_msg: The preceding task should not have changed anything
+
+- name: Ensure the entity report 1 is converted back to entities
+  infra.rhacs_configuration.rhacs_report_schedule:
+    name: Entity report 1
+    entities:
+      clusters:
+        names:
+          - value: production
+            match_type: EXACT
+    skip_validate_certs: true
+    rhacs_host: "{{ rhacs_host }}"
+    rhacs_token: "{{ rhacs_token }}"
+  register: result
+
+- name: Ensure that the task did change something
+  ansible.builtin.assert:
+    that: result['changed']
+    fail_msg: The preceding task should have changed something
+
+- name: Ensure the entity report 1 uses entities (no change)
+  infra.rhacs_configuration.rhacs_report_schedule:
+    name: Entity report 1
+    fixability: FIXABLE
+    severities:
+      - LOW
+    entities:
+      clusters:
+        names:
+          - value: production
+            match_type: EXACT
+    skip_validate_certs: true
+    rhacs_host: "{{ rhacs_host }}"
+    rhacs_token: "{{ rhacs_token }}"
+  register: result
+
+- name: Ensure that the task did not change anything
+  ansible.builtin.assert:
+    that: not result['changed']
+    fail_msg: The preceding task should not have changed anything
+
+- name: Ensure the entity report is scheduled 2 (all deployments)
+  infra.rhacs_configuration.rhacs_report_schedule:
+    name: Entity report 2
+    entities: {}
+    skip_validate_certs: true
+    rhacs_host: "{{ rhacs_host }}"
+    rhacs_token: "{{ rhacs_token }}"
+  register: result
+
+- name: Ensure that the task did change something
+  ansible.builtin.assert:
+    that: result['changed']
+    fail_msg: The preceding task should have changed something
+
+- name: Ensure the entity report is scheduled 2 (no change)
+  infra.rhacs_configuration.rhacs_report_schedule:
+    name: Entity report 2
+    fixability: BOTH
+    severities:
+      - IMPORTANT
+      - CRITICAL
+    entities: {}
+    skip_validate_certs: true
+    rhacs_host: "{{ rhacs_host }}"
+    rhacs_token: "{{ rhacs_token }}"
+  register: result
+
+- name: Ensure that the task did not change anything
+  ansible.builtin.assert:
+    that: not result['changed']
+    fail_msg: The preceding task should not have changed anything
+
+- name: Ensure the entity reports are removed
+  infra.rhacs_configuration.rhacs_report_schedule:
+    name: "{{ item }}"
+    state: absent
+    skip_validate_certs: true
+    rhacs_host: "{{ rhacs_host }}"
+    rhacs_token: "{{ rhacs_token }}"
+  loop:
+    - Entity report 1
+    - Entity report 2
+  register: result
+
+- name: Ensure that the task did change something
+  ansible.builtin.assert:
+    that: result['changed']
+    fail_msg: The preceding task should have changed something
+
 - name: Ensure the email notification method is removed
   infra.rhacs_configuration.rhacs_notifier_integration:
     name: ansible email conf 200

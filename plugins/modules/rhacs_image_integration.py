@@ -40,6 +40,18 @@ options:
         For example, you configure the RHACS integration with Amazon Elastic
         Container Registry (ECR) by setting the O(type) parameter to V(ecr),
         and by providing the configuration for ECR in the O(ecr) section.
+      - The V(stackrox) and V(clairify) types are deprecated because the
+        StackRox Scanner (Scanner V2) has been removed from RHACS 5.0.
+        Consequently, creating or updating these integrations fails with RHACS
+        5.0 and later.
+        Scanner V4 replaces StackRox Scanner and does not require an integration
+        configuration.
+      - The V(google) type (Google Container Registry) is deprecated because
+        Google deprecated Google Container Registry (GCR).
+        Consequently, creating these integrations fails with RHACS 5.0 and
+        later.
+        You can still update and delete existing integrations.
+        Use the V(artifactregistry) type (Google Artifact Registry) instead.
     required: true
     type: str
     choices:
@@ -115,6 +127,8 @@ options:
       - Configuration for the integration with StackRox Scanner.
       - Required when you set the O(type) parameter to V(clairify) or to
         V(stackrox).
+      - This section is deprecated for RHACS 5.0 and later, because RHACS 5.0
+        removed StackRox Scanner (Scanner V2).
     type: dict
     aliases:
       - stackrox
@@ -302,6 +316,9 @@ options:
     description:
       - Configuration for the integration with Google Container Registry.
       - Required when O(type=google).
+      - This section is deprecated for RHACS 5.0 and later, because RHACS 5.0
+        prevents the creation of Google Container Registry (GCR) integrations.
+        Use the O(artifactregistry) section instead.
     type: dict
     suboptions:
       endpoint:
@@ -587,7 +604,8 @@ def main():
                     fallback=(env_fallback, ["QUAY_VERIFY_SSL"]),
                 ),
                 username=dict(
-                    aliases=["quay_username"], fallback=(env_fallback, ["QUAY_USERNAME"])
+                    aliases=["quay_username"],
+                    fallback=(env_fallback, ["QUAY_USERNAME"]),
                 ),
                 password=dict(
                     no_log=True,
@@ -610,7 +628,10 @@ def main():
                 ),
                 secret_key=dict(
                     aliases=["aws_secret_access_key", "aws_secret_key"],
-                    fallback=(env_fallback, ["AWS_SECRET_ACCESS_KEY", "AWS_SECRET_KEY"]),
+                    fallback=(
+                        env_fallback,
+                        ["AWS_SECRET_ACCESS_KEY", "AWS_SECRET_KEY"],
+                    ),
                     no_log=True,
                 ),
                 region=dict(
@@ -649,7 +670,8 @@ def main():
         clair=dict(
             type="dict",
             options=dict(
-                endpoint=dict(), validate_certs=dict(type="bool", aliases=["tls_verify"])
+                endpoint=dict(),
+                validate_certs=dict(type="bool", aliases=["tls_verify"]),
             ),
         ),
         ibm=dict(
@@ -949,7 +971,7 @@ def main():
                 "region": region,
                 "useIam": use_iam if use_iam is not None else True,
                 "endpoint": endpoint_url if endpoint_url else "",
-                "useAssumeRole": use_assume_role if use_assume_role is not None else False,
+                "useAssumeRole": (use_assume_role if use_assume_role is not None else False),
                 "assumeRoleId": assume_role_id if assume_role_id else "",
                 "assumeRoleExternalId": (
                     assume_role_external_id if assume_role_external_id else ""
