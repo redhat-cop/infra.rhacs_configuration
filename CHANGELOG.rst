@@ -4,6 +4,31 @@ Red Hat Advanced Cluster Security for Kubernetes Collection Release Notes
 
 .. contents:: Topics
 
+v2.1.0
+======
+
+Release Summary
+---------------
+
+Add compatibility with RHACS 5
+
+Minor Changes
+-------------
+
+- rhacs_report_schedule - add the ``entities`` parameter to scope the reports with rules on the names, labels, and annotations of clusters, namespaces, and deployments, instead of using a deployment collection. The ``entities`` parameter requires RHACS 4.11 or later (https://github.com/redhat-cop/infra.rhacs_configuration/issues/26).
+- rhacs_report_schedule - the ``collection`` parameter is no longer required when creating a schedule if you provide the ``entities`` parameter instead. Using collections for scoping reports is deprecated since RHACS 5.0.
+
+Deprecated Features
+-------------------
+
+- rhacs_image_integration - the ``google`` integration type (Google Container Registry), and the ``google`` section, are deprecated. Google deprecated Google Container Registry (GCR), and RHACS 5.0 rejects the creation of new GCR integrations. Use the ``artifactregistry`` integration type (Google Artifact Registry) instead.
+- rhacs_image_integration - the ``stackrox`` and ``clairify`` integration types, and the ``clairify`` (``stackrox``) section, are deprecated. RHACS 5.0 removed StackRox Scanner (Scanner V2) and rejects these integrations. Scanner V4 replaces StackRox Scanner and does not require an integration configuration.
+
+Bugfixes
+--------
+
+- rhacs_auth_provider - RHACS 5.0 normalizes the ``uiEndpoint`` value (``host:port`` format, no scheme or path, port 443 by default). The module was comparing the ``rhacs_url`` parameter with the stored value without normalizing it, and so deleted and re-created the authentication provider at each run. The module now normalizes the ``rhacs_url`` parameter the same way before comparing and sending it.
+
 v2.0.1
 ======
 

@@ -77,25 +77,25 @@ options:
       nvd_cvss:
         description:
           - Whether to include the NVD CVSS column in the report configuration.
-          - V(true) by default since StackRox and RHACS 4.11.
+          - V(true) by default since RHACS 4.11.
           - The O(include.nvd_cvss) parameter is deprecated.
-            StackRox and RHACS 4.11 and later force the parameter to V(true).
+            RHACS 4.11 and later force the parameter to V(true).
         type: bool
       epss_probability:
         description:
           - Whether to include the EPSS probability column in the report
             configuration.
-          - V(true) by default since StackRox and RHACS 4.11.
+          - V(true) by default since RHACS 4.11.
           - The O(include.epss_probability) parameter is deprecated.
-            StackRox and RHACS 4.11 and later force the parameter to V(true).
+            RHACS 4.11 and later force the parameter to V(true).
         type: bool
       advisory:
         description:
           - Whether to include the advisory name and link column in the report
             configuration.
-          - V(true) by default since StackRox and RHACS 4.11.
+          - V(true) by default since RHACS 4.11.
           - The O(include.advisory) parameter is deprecated.
-            StackRox and RHACS 4.11 and later force the parameter to V(true).
+            RHACS 4.11 and later force the parameter to V(true).
         type: bool
   since:
     description:
@@ -128,24 +128,25 @@ options:
         create and manage deployment collections.
       - When you create a schedule, you must provide either the O(collection)
         or the O(entities) parameter.
+      - Using collections for scoping reports is deprecated since
+        RHACS 5.0, and will be removed in a future RHACS release.
+        Use the O(entities) parameter instead.
       - Mutually exclusive with O(entities).
-      - Using collections for scoping reports is deprecated since StackRox
-        and RHACS 5.0, and will be removed in a future StackRox and RHACS
-        release. Use the O(entities) parameter instead.
-        StackRox and RHACS do not automatically convert the existing
-        collection-based schedules.
     type: str
   entities:
     description:
       - Scope of the reports, defined by rules on the names, the labels, and
         the annotations of clusters, namespaces, and deployments.
-      - The reports include the deployments that match all the rules that you
-        define. For a given rule, the deployments must match at least one of
-        the values that you list.
+      - The reports include only the deployments that match all the rules
+        that you define (logical AND between the rules).
+        For a given rule, the deployments must match at least one of
+        the values that you list (logical OR between the values).
         For example, if you define a rule for the cluster names and a rule
-        for the namespace labels, then the reports include the deployments
-        running in the clusters that match one of the cluster names, and in
-        the namespaces that have one of the labels.
+        for the namespace labels, then the reports include only the
+        deployments that run in a cluster that matches one of the cluster
+        names, and in a namespace that has one of the labels.
+        The reports do not include the deployments of the namespaces that have
+        the labels but that run in other clusters.
       - If you set O(entities) to an empty dictionary (V({})), then the
         reports include all the deployments.
       - The module replaces all the existing rules of the schedule with the
@@ -155,10 +156,10 @@ options:
         the O(entities) rules instead of the collection.
       - When you create a schedule, you must provide either the O(collection)
         or the O(entities) parameter.
-      - Mutually exclusive with O(collection).
-      - The O(entities) parameter requires StackRox and RHACS 4.11 or later.
-      - StackRox and RHACS do not support rules on the identifier of the
+      - The O(entities) parameter requires RHACS 4.11 or later.
+      - RHACS does not support rules on the identifier of the
         clusters, namespaces, or deployments.
+      - Mutually exclusive with O(collection).
     type: dict
     suboptions:
       clusters:
@@ -186,8 +187,6 @@ options:
                 description:
                   - V(EXACT) for an exact match of the value, or V(REGEX) to
                     use the value as a regular expression.
-                  - The StackRox and RHACS web console uses regular
-                    expressions.
                 type: str
                 choices:
                   - EXACT
@@ -349,13 +348,6 @@ notes:
     module selects the schedule that matches most of the provided parameters.
   - Also, the module deletes all the schedules matching the O(name) parameter
     for delete operations.
-  - For the schedules that use the O(entities) parameter, StackRox and RHACS
-    store the O(severities) and O(fixability) filters in a search query.
-    The module also adds the C(Vulnerability State:OBSERVED) filter to that
-    query when it creates the schedule, so that the reports exclude the
-    deferred and false positive CVEs, as the web console does.
-    For updates, the module preserves the additional filters that you might
-    have added to the query by using the web console.
 attributes:
   check_mode:
     support: full
