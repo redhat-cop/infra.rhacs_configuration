@@ -196,3 +196,17 @@ releases:
     fragments:
     - 27-v2.1.0-summary.yml
     release_date: '2026-11-17'
+  2.2.0:
+    changes:
+      breaking_changes:
+      - Bump the minimum required version of Ansible Core to 2.16.0 (``requires_ansible``
+        in ``meta/runtime.yml``). Ansible Core 2.15 is no longer supported by Ansible
+        Automation Platform and is no longer accepted for certification.
+      minor_changes:
+      - Exclude the tests, the changelog fragments, the CI configuration, and the
+        development tool configuration files from the collection artifact by adding
+        a ``build_ignore`` section to ``galaxy.yml``.
+      release_summary: Require Ansible Core 2.16 or later.
+    fragments:
+    - requires_ansible_2_16.yml
+    release_date: '2026-11-19'

@@ -4,6 +4,24 @@ Red Hat Advanced Cluster Security for Kubernetes Collection Release Notes
 
 .. contents:: Topics
 
+v2.2.0
+======
+
+Release Summary
+---------------
+
+Require Ansible Core 2.16 or later.
+
+Minor Changes
+-------------
+
+- Exclude the tests, the changelog fragments, the CI configuration, and the development tool configuration files from the collection artifact by adding a ``build_ignore`` section to ``galaxy.yml``.
+
+Breaking Changes / Porting Guide
+--------------------------------
+
+- Bump the minimum required version of Ansible Core to 2.16.0 (``requires_ansible`` in ``meta/runtime.yml``). Ansible Core 2.15 is no longer supported by Ansible Automation Platform and is no longer accepted for certification.
+
 v2.1.0
 ======
 
